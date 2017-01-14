@@ -6,6 +6,8 @@
 #query processor
 #meta processor
 #
+ typeset -a errorslist=("YOU DIED" "hey");
+echo  ${errorslist[1]};
 
 
 
