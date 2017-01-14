@@ -61,16 +61,63 @@ done;
 echo $strtemp
 
 }
-function create-db(){}
-function create-table(){
-if [ -d $1$2 -a ! -f  $1$2/$3  ] 
+function create-db(){
+if [ ! -d  $workingstr/$1  ] 
 then
-touch $1$2/$3.table
-$eh $?;
-touch $1$2/$3.meta
-$eh $?;
-touch $1$2/$3.log
-$eh $?;
+mkdir $workingstr/$1
+#$eh $?;
+else
+return 2;
+fi
+}
+function create-table(){
+typeset -l str="$*";
+typeset tname=`echo $str | cut -f1 -d" " `
+typeset tbod=`echo $str | cut -f2- -d" " `
+
+typeset -A alltypes;
+alltypes["number"]=1;
+alltypes["string"]=1;
+tbod=`delcha "$tbod" " "`
+tbod=`delcha "$tbod" "{"`
+tbod=`delcha "$tbod" "}"`
+echo "NAME :" $tbod" BODY"$tname
+coltypes=(`echo $tbod | awk -F, '{
+    
+    i=1;
+    while(i<=NF){
+    split($i,a,":");
+    print a[2];
+    i++;
+    }
+    
+    }
+'`)
+#echo ${alltypes[*]}
+for typecol in ${coltypes[*]}
+   do
+   
+            
+            if [ ! ${alltypes[$typecol] } ]  
+            then
+                return 3;
+                
+            fi
+   
+    done
+   
+#echo "WASAL";
+
+if [ -d $currworkdb -a ! -f  $currworkdb/$tname.table  ]
+then
+touch $currworkdb/$tname.table
+#$eh $?;
+touch $currworkdb/$tname.meta
+
+echo $tbod | sed 's/,/\n/g' > $currworkdb/$tname.meta
+#$eh $?;
+touch $currworkdb/$tname.log
+#$eh $?;
 else
 return 3;
 fi
@@ -81,31 +128,46 @@ function create(){
 typeset -A arrlocalinstr
 arrlocalinstr["table"]="create-table"
 arrlocalinstr["database"]="create-db"
+typeset -l str="$*";
+
+instructionpart=`echo $str | cut -f1 -d" " `
+typeset -l body=`echo $str | cut -f2- -d" " `
+echo "instruction: "$instructionpart" body "$body
+${arrlocalinstr[$instructionpart]}  $body;
+}
+
+function delete(){
+
 echo "ININININININININ";
-typeset body=$*
-echo $body;
 }
 #echo ${str:i:1}
+
 typeset -A arrinstr
 typeset -l str
-corestr="~/"
-workingstr=""
+typeset -lrx corestr="."
+typeset -lrx workingstr=$corestr"/dbmsroot"
+typeset -lx currworkdb=$corestr"/dbmsroot/amr"
+typeset isusingdb=0
+ls $workingstr;
 arrinstr["create"]="create"
 arrinstr["delete"]="delete"
 
-str="            create       table     {      id:  number,   kek:  string,mg:  number,  sss:string ,a:pk}"
+#str="            ceate       table     {      id:  number,   kek:  string,mg:  number,  sss:string ,a:pk}"
 #"            create       Database    SATIMA"
 #"insert (a,b,c,d,s) into tname  "
 #"delete table x"
 #"delete from tablename where msd=a";
 
 
-str= $*
+str="$*"
 #str=`clearbeg "$str" " "  `;
-echo $str;
+#echo "STRING " $str;
 
-ord1=`echo $str | cut -f3 -d" " `
+ord1=`echo $str | cut -f1 -d" " `
+echo "ORDER" $ord1;
 body=`echo $str | cut -f2- -d" " `
+echo "Body" $body;
+#echo "SENT " ${arrinstr[$ord1]}
 ${arrinstr[$ord1]} $body;
 #echo "HAwt bod"$body;
 order=`strfrom "$str" "{"`
@@ -128,7 +190,7 @@ c=(`echo $meta | awk -F, '{
     }'`)
 for typer in ${c[*]};
 do
-ls
+exit ;
 #echo $typer;
 #echo "Here's what you gonna do '"
 done
