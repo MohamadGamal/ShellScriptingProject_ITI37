@@ -61,37 +61,14 @@ done;
 echo $strtemp
 
 }
-function create-db(){}
-function create-table(){
-if [ -d $1$2 -a ! -f  $1$2/$3  ] 
-then
-touch $1$2/$3.table
-$eh $?;
-touch $1$2/$3.meta
-$eh $?;
-touch $1$2/$3.log
-$eh $?;
-else
-return 3;
-fi
 
-
-}
 function create(){
-typeset -A arrlocalinstr
-arrlocalinstr["table"]="create-table"
-arrlocalinstr["database"]="create-db"
-echo "ININININININININ";
-typeset body=$*
-echo $body;
+cd;
 }
 #echo ${str:i:1}
-typeset -A arrinstr
-typeset -l str
-corestr="~/"
-workingstr=""
-arrinstr["create"]="create"
-arrinstr["delete"]="delete"
+typeset -A arr
+#arr[""]
+
 
 str="            create       table     {      id:  number,   kek:  string,mg:  number,  sss:string ,a:pk}"
 #"            create       Database    SATIMA"
@@ -105,14 +82,12 @@ str= $*
 echo $str;
 
 ord1=`echo $str | cut -f3 -d" " `
-body=`echo $str | cut -f2- -d" " `
-${arrinstr[$ord1]} $body;
-#echo "HAwt bod"$body;
+
 order=`strfrom "$str" "{"`
 supord=`delcha "$order" " "`
 supord=`delcha "$supord" "{"`
 meta=`delcha "$supord" "}"`
-#echo "SUP"$meta;
+echo "SUP"$meta;
 c=(`echo $meta | awk -F, '{
     
     i=1;
@@ -128,9 +103,8 @@ c=(`echo $meta | awk -F, '{
     }'`)
 for typer in ${c[*]};
 do
-ls
-#echo $typer;
-#echo "Here's what you gonna do '"
+echo $typer;
+echo "Here's what you gonna do '"
 done
 #echo $str;
 
