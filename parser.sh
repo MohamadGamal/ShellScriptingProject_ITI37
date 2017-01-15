@@ -201,6 +201,11 @@ function update
 #update tname a=3,b=2 where a==f 
 #"tname mg=7,kek='top' where a==f "
 typeset -l str="$*"
+typeset  -A typesnamesa
+
+typesnamesa["non"]=99
+typesnamesa["number"]=1
+typesnamesa["string"]=2
 
 typeset tname=`echo $str | cut -f1 -d" " `;
 if [ ! -f  $currworkdb/$tname.table  ]
@@ -221,6 +226,11 @@ typeset  types=(`awk -F: '{
    print $2;
     }
 ' $currworkdb/$tname.meta `);
+
+
+
+
+
 typeset  pkis=${names[0]};
 #echo $changeble
 typeset keys=(`echo $changeble | awk -F, '{
@@ -239,12 +249,65 @@ typeset values=(`echo $changeble | awk -F, '{
     i=1;
     while(i<=NF){
     split($i,a,"=");
-    print a[1];
+    print a[2];
     i++;
     }
     
     }
    '`)
+
+
+
+
+typeset -A kolelseha;
+typeset -i newerc=0
+typeset supertemp;
+while ((newerc < ${#types[*]}))
+do
+supertemp=${names[$newerc]}
+kolelseha[$supertemp]=${types[$newerc]}
+((newerc = newerc + 1))
+done
+
+
+typeset -A kolelslt;
+ newerc=0
+typeset supertemp;
+while ((newerc < ${#keys[*]}))
+do
+supertemp=${keys[$newerc]}
+kolelslt[$supertemp]=${values[$newerc]}
+((newerc = newerc + 1))
+done
+
+
+
+for elem in ${keys[*]}
+do
+kolelslt[$elem]=`echo ${kolelslt[$elem]} | sed s/\'//g `;
+typeset -l testoresult=`isoftype ${kolelslt[$elem]} ` 
+typeset tempoo=${kolelseha[$elem]}
+#echo $tempoo $keys $testoresult
+#echo "HONGA !!" ${typesnamesa["number"] }" d" ${typesnamesa["$testresult"]}"dgg"$tempo"OTHER"$testresult;
+if [   ${typesnamesa["$testoresult"]}   -gt ${typesnamesa["$tempoo"] } ]
+then
+#echo $testresult"5arag"${types[$cntr]}"LOL"$cntr
+return 3;
+fi
+done;
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 if [ -z "$condition" ]
 then 
@@ -575,7 +638,7 @@ typeset -l tempo=${types["$cntr"]};
 #echo "HONGA !!" ${typesnamesa["number"] }" d" ${typesnamesa["$testresult"]}"dgg"$tempo"OTHER"$testresult;
 if [   ${typesnamesa["$testresult"]}   -gt ${typesnamesa["$tempo"] } ]
 then
-echo $testresult"5arag"${types[$cntr]}"LOL"$cntr
+#echo $testresult"5arag"${types[$cntr]}"LOL"$cntr
 return 3;
 fi
 (( cntr=cntr+1 ));
@@ -658,6 +721,17 @@ function out {
 echo "BYEEEEE ;)"
 exit 0;
 }
+function droptable
+{
+if [ -f  $currworkdb/$1.table   ]
+then
+   rm $currworkdb/$1.table
+   rm $currworkdb/$1.log
+     rm $currworkdb/$1.meta
+else
+return 8;
+fi
+}
 function helpcmd
 {
     
@@ -700,6 +774,11 @@ view databases
 view tables
 
 "
+arrhelp["drop"]="drop  command , Usage :
+
+drop tablename
+
+"
 arrhelp["bye"]="exit command , Usage :
 bye
 
@@ -740,6 +819,7 @@ arrinstr["use"]="use"
 arrinstr["view"]="view"
 arrinstr["bye"]="out"
 arrinstr["help"]="helpcmd"
+arrinstr["drop"]="droptable"
 while ((1))
 do
 echo -n "[$workdbstr]>>"
