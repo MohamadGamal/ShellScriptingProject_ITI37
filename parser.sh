@@ -300,15 +300,6 @@ done;
 
 
 
-
-
-
-
-
-
-
-
-
 if [ -z "$condition" ]
 then 
 condition=1;
