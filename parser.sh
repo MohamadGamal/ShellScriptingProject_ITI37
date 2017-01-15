@@ -6,15 +6,20 @@
 #query processor
 #meta processor
 #
+
+
 function ErrorHandler
 {
-    typeset -a errorslist=("Operation not allowed" "Already exists" "table does not exist");
+    typeset -a errorslist=("SUCCESSFULLY COMPLETED" "Operation not allowed" "Already exists" "table does not exist");
    # echo "IN" $1;
 if [ $1 -eq 0  ] 
 then
+echo ${errorslist[ $1 ]};
+return 0;
 return 0;
 else
-echo ${errorslist[ (($1 - 1)) ]};
+echo ${errorslist[ $1 ]};
+return $1;
 fi
 }
 
@@ -160,6 +165,7 @@ alltypes["string"]="^[[:alnum:]]+$";
 typeset -a typenames=("number" "string");
 for type in ${typenames[*]}
 do
+
 if [[ $1 =~ ${alltypes[$type]} ]]
 then
 echo $type
@@ -188,7 +194,7 @@ typeset -l str="$*"
 typeset tname=`echo $str | cut -f1 -d" " `;
 
 typeset changeble=`echo $str | cut -f2 -d" " `;
-echo $changeble;
+#echo $changeble;
 typeset condition=`echo $str | cut -f4- -d" " `;
 
 typeset  names=(`awk -F: '{
@@ -202,7 +208,7 @@ typeset  types=(`awk -F: '{
     }
 ' $currworkdb/$tname.meta `);
 typeset  pkis=${names[0]};
-echo $changeble
+#echo $changeble
 typeset keys=(`echo $changeble | awk -F, '{
     
     i=1;
@@ -265,7 +271,7 @@ typeset haspk=0;
 
 for j in ${keys[*]}
 do
-echo $j $pkis
+#echo $j $pkis
 if [ $pkis = $j ]
 then
 
@@ -316,16 +322,16 @@ changeble=`echo $changeble | sed "s/'/\"/g"  `
 #echo "cond" $condition "print"$printable
 tbd=" awk  {if($condition){print\$0;};}   $currworkdb/$tname.table";
 cmd=" awk {if($condition){$changeble;};print\$0;} $currworkdb/$tname.table";
-echo $tbd
+#echo $tbd
 tbf=`$tbd | wc -l `;
-echo $tbf
+#echo $tbf
 if [ $tbf -gt 1 -a $haspk -eq 1 ]
 then
 return 4;
 else
-echo $cmd
+#echo $cmd
 $cmd >$currworkdb/$tname.table.temp
-cat /home/Mgamal/git.work/BashDBMS/dbmsroot/amr/alpha.table.temp > $currworkdb/$tname.table
+cat $currworkdb/$tname.table.temp > $currworkdb/$tname.table
 rm $currworkdb/$tname.table.temp
 fi
 #$tbd
@@ -349,7 +355,7 @@ typeset -l str="$*"
 
 typeset tname=`echo $str | cut -f2 -d" " `;
 
-echo $str
+#echo $str
 typeset condition=`echo $str | cut -f4- -d" " `;
 
 #2
@@ -393,14 +399,14 @@ condition=`echo $condition | sed "s/'/\"/g"  `
 condition=`delcha "$condition" " "`
 
 #echo "cond" $condition "print"$printable
-tbd=" awk  {if($condition){print\$0;};}   /home/Mgamal/git.work/BashDBMS/dbmsroot/amr/alpha.table";
-cmd=" awk {if(!($condition)){print\$0;};} /home/Mgamal/git.work/BashDBMS/dbmsroot/amr/alpha.table";
+tbd=" awk  {if($condition){print\$0;};}    $currworkdb/$tname.table";
+cmd=" awk {if(!($condition)){print\$0;};}  $currworkdb/$tname.table";
 #echo $cmd;
 
 
 
 $cmd >$currworkdb/$tname.table.temp
-cat /home/Mgamal/git.work/BashDBMS/dbmsroot/amr/alpha.table.temp > $currworkdb/$tname.table
+cat $currworkdb/$tname.table.temp > $currworkdb/$tname.table
 rm $currworkdb/$tname.table.temp
 #$tbd
 
@@ -511,10 +517,11 @@ $cmd
 function insertnormal(){
 
 typeset -l str="$*";
-typeset -a typesnames
-typesnames["number"]=1;
-typesnames["string"]=2;
-typesnames["non"]=99;
+typeset  -A typesnamesa
+
+typesnamesa["non"]=99
+typesnamesa["number"]=1
+typesnamesa["string"]=2
 #names
 typeset tname=`echo $str | cut -f1 -d" " `;
 typeset  names=(`awk -F: '{
@@ -542,8 +549,11 @@ typeset -l pkeys=(`awk '{
 typeset body=`echo $str | cut -f2- -d" " `;
 body=`delcha "$body" "{"`
 body=`delcha "$body" "}"`
-echo "BOD"$body;
-body=($body);
+#echo "BOD"$body;
+
+body=(`echo $body | sed 's/,/ /g'`) 
+
+
 for pk in ${pkeys[*]}
 do
 
@@ -558,9 +568,9 @@ for elems in ${body[*]}
 do
 
 typeset -l testresult=`isoftype $elems` 
-typeset -l tempo=${types[$cntr]};
-#echo $testresult$elems
-if [ ${typesnames["$testresult"]} -gt ${typesnames[$tempo] }  ]
+typeset -l tempo=${types["$cntr"]};
+#echo "HONGA !!" ${typesnamesa["number"] }" d" ${typesnamesa["$testresult"]}"dgg"$tempo"OTHER"$testresult;
+if [    ${typesnamesa["$testresult"]} -gt  ${typesnamesa["$tempo"] }  ]
 then
 #echo $testresult"5arag"${types[$cntr]}"LOL"$cntr
 return 4;
@@ -591,7 +601,7 @@ if [ -z "$instructionpart"   ]
 then
 instructionpart="normal"
 fi
-echo $instructionpart
+#echo $instructionpart
 ${arrlocalinstr["$instructionpart"]}  $str;
 #echo "BACK" $?;
 
