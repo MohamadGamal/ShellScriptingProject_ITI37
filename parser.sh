@@ -6,6 +6,18 @@
 #query processor
 #meta processor
 #
+function ErrorHandler
+{
+    typeset -a errorslist=("Operation not allowed" "Already exists" "table does not exist");
+   # echo "IN" $1;
+if [ $1 -eq 0  ] 
+then
+return 0;
+else
+echo ${errorslist[ (($1 - 1)) ]};
+fi
+}
+
 function clearbeg(){
 typeset str=$1
 typeset i=0;
@@ -124,31 +136,8 @@ fi
 
 
 }
-function select(){
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-}
 function create(){
 typeset -A arrlocalinstr
 arrlocalinstr["table"]="create-table"
@@ -187,6 +176,246 @@ echo "non";
 return 0;
 }
 
+
+
+############################################################################################
+######UPDATE
+
+function update
+{
+
+#update Tname
+#update tname a=3,b=2 where a==f 
+#"tname mg=7,kek='top' where a==f "
+str="$*"
+
+typeset tname=`echo $str | cut -f1 -d" " `;
+
+typeset changeble=`echo $str | cut -f2 -d" " `;
+echo $changeble;
+typeset condition=`echo $str | cut -f4 -d" " `;
+
+typeset  names=(`awk -F: '{
+
+   print $1;
+    }
+' $currworkdb/$tname.meta `);
+typeset  types=(`awk -F: '{
+    
+   print $2;
+    }
+' $currworkdb/$tname.meta `);
+typeset  pkis=${names[0]};
+echo $changeble
+typeset keys=(`echo $changeble | awk -F, '{
+    
+    i=1;
+    while(i<=NF){
+    split($i,a,"=");
+    print a[1];
+    i++;
+    }
+    
+    }
+   '`)
+typeset values=(`echo $changeble | awk -F, '{
+    
+    i=1;
+    while(i<=NF){
+    split($i,a,"=");
+    print a[1];
+    i++;
+    }
+    
+    }
+   '`)
+
+pk=${names[0]}
+for i in ${keys[*]}
+do
+
+typeset ticky=0;
+
+
+for j in ${names[*]}
+do
+if [ $i = $j ]
+then
+ticky=1;
+
+fi
+done
+
+
+
+
+if [ $ticky -eq 0 ]
+then
+return 4;
+fi
+
+
+done
+#2
+
+
+#echo "HERE";
+typeset haspk=0;
+
+for j in ${keys[*]}
+do
+echo $j $pkis
+if [ $pkis = $j ]
+then
+
+haspk=1;
+
+fi
+done
+
+#echo "HASPK"$haspk;
+
+
+
+
+typeset -A namesnew;
+typeset cntr=1;
+for j in ${names[*]}
+do
+
+namesnew[$j]=$cntr;
+((cntr=cntr+1));
+done
+
+
+condition=`echo $condition | sed -e 's/AND/\&\&/g' -e 's/OR/||/g'`;
+
+#echo "NAMES IS" ${names[*]};
+
+namestyp=`echo ${names[*]} | sed s/" "/,/g  `
+
+changeble=`echo $changeble | sed s/%/$namestyp/g `
+#echo "PRINTI" $printable
+for j in ${names[*]}
+do
+c=" s/$j/\$${namesnew[$j]}/g"
+#echo $c
+condition=`echo $condition | sed $c  `;
+changeble=`echo $changeble | sed $c  `;
+done
+#echo "COND" $condition 
+#printable=`echo "$printable "| sed 's/,/"-------"/g'  `;
+echo
+condition=`echo $condition | sed "s/'/\"/g"  `
+condition=`delcha "$condition" " "`
+changeble=`delcha "$changeble" " "`
+changeble=`echo $changeble | sed s/,/\;/g `
+changeble=`echo $changeble | sed "s/'/\"/g"  `
+#echo "cond" $condition "print"$printable
+tbd=" awk  {if($condition){print\$0;};}   $currworkdb/$tname.table";
+cmd=" awk {if($condition){$changeble;};print\$0;} $currworkdb/$tname.table";
+echo $tbd
+tbf=`$tbd | wc -l `;
+echo $tbf
+if [ $tbf -gt 1 -a $haspk -eq 1 ]
+then
+return 4;
+else
+echo $cmd
+$cmd >$currworkdb/$tname.table.temp
+cat /home/Mgamal/git.work/BashDBMS/dbmsroot/amr/alpha.table.temp > $currworkdb/$tname.table
+rm $currworkdb/$tname.table.temp
+fi
+#$tbd
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+############################################################################################
+######SELECT
+
+
+
+function selectfn
+{
+
+
+typeset -l str="$*";
+
+typeset tname=`echo $str | cut -f3 -d" " `;
+
+typeset printable=`echo $str | cut -f1 -d" " `;
+
+typeset condition=`echo $str | cut -f5 -d" " `;
+
+if [ -z $condition ]
+then 
+condition=1;
+fi;
+
+
+typeset  names=(`awk -F: '{
+    
+   print $1;
+    }
+' $currworkdb/$tname.meta `);
+typeset -A namesnew;
+typeset cntr=1;
+for j in ${names[*]}
+do
+
+namesnew[$j]=$cntr;
+((cntr=cntr+1));
+done
+
+
+
+condition=`echo $condition | sed -e 's/AND/\&\&/g' -e 's/OR/||/g'`;
+
+#echo "NAMES IS" ${names[*]};
+
+typeset namestyp=`echo ${names[*]} | sed s/" "/,/g  `
+
+printable=`echo $printable | sed s/%/$namestyp/g `
+typeset printabletemp=$printable;
+#echo "PRINTI" $printable
+for j in ${names[*]}
+do
+typeset c=" s/$j/\$${namesnew[$j]}/g"
+#echo $c
+condition=`echo $condition | sed $c  `;
+printable=`echo $printable | sed $c  `;
+done
+#echo "COND" $condition 
+#printable=`echo "$printable "| sed 's/,/"-------"/g'  `;
+condition=`echo $condition | sed "s/'/\"/g"  `
+condition=`delcha "$condition" " "`
+printable=`delcha "$printable" " "`
+#echo "cond" $condition "print"$printable
+typeset cmd=" awk {if($condition){print$printable;};} $currworkdb/$tname.table";
+#echo $cmd
+echo $printabletemp | sed s/,/" "/g  
+$cmd
+
+
+
+
+}
+
+
+
+############################################################################################
+######INSERT
 function insertnormal(){
 
 typeset -l str="$*";
@@ -196,7 +425,7 @@ typesnames["string"]=2;
 typesnames["non"]=99;
 #names
 typeset tname=`echo $str | cut -f1 -d" " `;
-typeset -l names=(`awk -F: '{
+typeset  names=(`awk -F: '{
     
    print $1;
     }
@@ -222,19 +451,7 @@ typeset body=`echo $str | cut -f2- -d" " `;
 body=`delcha "$body" "{"`
 body=`delcha "$body" "}"`
 echo "BOD"$body;
-body=(`echo $body | awk -F, '{
-    
-    i=1;
-    while(i<=NF){
-    split($i,a,":");
-    print a[2];
-    i++;
-    }
-    
-    }
-    END{
-        print $(i-1);
-    }'`);
+body=($body);
 for pk in ${pkeys[*]}
 do
 
@@ -264,7 +481,7 @@ then
 return 4;
 fi
 
-#echo ${body[*]} >>$currworkdb/$tname.table
+echo ${body[*]} >>$currworkdb/$tname.table
 #echo "BA7"
 
 
@@ -292,6 +509,9 @@ ${arrlocalinstr["$instructionpart"]}  $str;
 
 
 }
+
+
+#########################################################################################################
 #echo ${str:i:1}
 
 typeset -A arrinstr
@@ -304,13 +524,18 @@ ls $workingstr;
 arrinstr["create"]="create"
 arrinstr["delete"]="delete"
 arrinstr["insert"]="insert"
+arrinstr["select"]="selectfn"
+arrinstr["update"]="update"
 #str="            ceate       table     {      id:  number,   kek:  string,mg:  number,  sss:string ,a:pk}"
 #"            create       Database    SATIMA"
 #"insert tname (a,b,c,d,s) "
 #"delete table x"
 #"delete from tablename where msd=a";
 #insert tname {a,b,c,d,s}
-#select * from tname where x and d
+#select % from tname where x==3 and d<4
+#Example : select % from alpha where id\<121
+#update tname a=3,b=2 where a==f 
+
 str="$*"
 #str=`clearbeg "$str" " "  `;
 #echo "STRING " $str;
@@ -318,7 +543,7 @@ str="$*"
 ord1=`echo $str | cut -f1 -d" " `
 echo "ORDER" $ord1;
 body=`echo $str | cut -f2- -d" " `
-echo "Body" $body;
+#echo "Body" $body;
 #echo "SENT " ${arrinstr[$ord1]}
 ${arrinstr[$ord1]} $body;
 echo "TPTP";
