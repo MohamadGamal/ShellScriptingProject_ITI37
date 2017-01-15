@@ -578,11 +578,7 @@ echo ${body[*]} >>$currworkdb/$tname.table
 
 
 }
-function insertvalues(){
 
-echo"lessa"
-
-}
 function insert(){
 typeset -l str="$*";
 typeset -A arrlocalinstr
@@ -602,15 +598,31 @@ ${arrlocalinstr["$instructionpart"]}  $str;
 
 }
 
+function use {
+if [ -d  $workingstr/$1   ]
+then
+    currworkdb=$workingstr/$1
+else
+return 5;
+fi
 
+
+}
 #########################################################################################################
 #echo ${str:i:1}
-
+#"            create       Database    SATIMA"
+#"insert tname (a,b,c,d,s) "
+#"delete table x"
+#"delete from tablename where msd=a";
+#insert tname {a,b,c,d,s}
+#select % from tname where x==3 and d<4
+#Example : select % from alpha where id\<121
+#update tname a=3,b=2 where a==f 
 typeset -A arrinstr
 typeset -l str
 typeset -lrx corestr="."
 typeset -lrx workingstr=$corestr"/dbmsroot"
-typeset -lx currworkdb=$corestr"/dbmsroot/amr"
+typeset -lx currworkdb=$workingstr"/amr"
 typeset isusingdb=0
 ls $workingstr;
 arrinstr["create"]="create"
@@ -618,10 +630,18 @@ arrinstr["delete"]="delete"
 arrinstr["insert"]="insert"
 arrinstr["select"]="selectfn"
 arrinstr["update"]="update"
+arrinstr["use"]="use"
 
 
+while ((1))
+do
+read str
+ord1=`echo $str | cut -f1 -d" " `
+echo "ORDER" $ord1;
+body=`echo $str | cut -f2- -d" " `
+${arrinstr[$ord1]} $body;
 
-
+done
 
 
 
@@ -648,9 +668,7 @@ str="$*"
 #str=`clearbeg "$str" " "  `;
 #echo "STRING " $str;
 
-ord1=`echo $str | cut -f1 -d" " `
-echo "ORDER" $ord1;
-body=`echo $str | cut -f2- -d" " `
+
 #echo "Body" $body;
 #echo "SENT " ${arrinstr[$ord1]}
 ${arrinstr[$ord1]} $body;
