@@ -193,7 +193,7 @@ typeset tname=`echo $str | cut -f1 -d" " `;
 
 typeset changeble=`echo $str | cut -f2 -d" " `;
 echo $changeble;
-typeset condition=`echo $str | cut -f4 -d" " `;
+typeset condition=`echo $str | cut -f4- -d" " `;
 
 typeset  names=(`awk -F: '{
 
@@ -229,6 +229,11 @@ typeset values=(`echo $changeble | awk -F, '{
     
     }
    '`)
+
+if [ -z "$condition" ]
+then 
+condition=1;
+fi;
 
 pk=${names[0]}
 for i in ${keys[*]}
@@ -287,9 +292,10 @@ namesnew[$j]=$cntr;
 ((cntr=cntr+1));
 done
 
+#echo $condition
+condition=`echo $condition | sed -e 's/ and /\&\&/g' -e 's/ or /||/g'`;
 
-condition=`echo $condition | sed -e 's/AND/\&\&/g' -e 's/OR/||/g'`;
-
+#echo $condition
 #echo "NAMES IS" ${names[*]};
 
 namestyp=`echo ${names[*]} | sed s/" "/,/g  `
@@ -305,7 +311,7 @@ changeble=`echo $changeble | sed $c  `;
 done
 #echo "COND" $condition 
 #printable=`echo "$printable "| sed 's/,/"-------"/g'  `;
-echo
+#echo
 condition=`echo $condition | sed "s/'/\"/g"  `
 condition=`delcha "$condition" " "`
 changeble=`delcha "$changeble" " "`
@@ -329,6 +335,29 @@ fi
 #$tbd
 
 }
+
+############################################################################################
+######delete
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -356,9 +385,9 @@ typeset tname=`echo $str | cut -f3 -d" " `;
 
 typeset printable=`echo $str | cut -f1 -d" " `;
 
-typeset condition=`echo $str | cut -f5 -d" " `;
-
-if [ -z $condition ]
+typeset condition=`echo $str | cut -f5- -d" " `;
+#echo $condition
+if [ -z "$condition" ]
 then 
 condition=1;
 fi;
@@ -380,7 +409,7 @@ done
 
 
 
-condition=`echo $condition | sed -e 's/AND/\&\&/g' -e 's/OR/||/g'`;
+condition=`echo $condition | sed -e 's/ and /\&\&/g' -e 's/ or /||/g'`;
 
 #echo "NAMES IS" ${names[*]};
 
@@ -546,16 +575,16 @@ body=`echo $str | cut -f2- -d" " `
 #echo "Body" $body;
 #echo "SENT " ${arrinstr[$ord1]}
 ${arrinstr[$ord1]} $body;
-echo "TPTP";
+#echo "TPTP";
 #echo "HAwt bod"$body;
-echo "TPTP";
+#echo "TPTP";
 #order=`strfrom "$str" "{"`
 #supord=`delcha "$order" " "`
 #echo "TPTP";
 #supord=`delcha "$supord" "{"`
 meta=`delcha "$supord" "}"`
 #echo "SUP"$meta;
-echo "TPTP";
+#echo "TPTP";
 c=(`echo $meta | awk -F, '{
     
     i=1;
@@ -569,7 +598,7 @@ c=(`echo $meta | awk -F, '{
     END{
         print $(i-1);
     }'`)
-    echo "TPTP";
+  #  echo "TPTP";
 for typer in ${c[*]};
 do
 #echo "TPTP";
