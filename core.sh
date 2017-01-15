@@ -21,20 +21,7 @@ else
 echo ${errorslist[ (($1 - 1)) ]};
 fi
 }
-function createTable
-{
-if [ -d $1$2 -a ! -f  $1$2/$3  ] 
-then
-touch $1$2/$3.table
-$eh $?;
-touch $1$2/$3.meta
-$eh $?;
-touch $1$2/$3.log
-$eh $?;
-else
-return 3;
-fi
-}
+
 
 typeset source="./"
 #cd source;

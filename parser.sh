@@ -10,12 +10,22 @@
 
 function ErrorHandler
 {
-    typeset -a errorslist=("SUCCESSFULLY COMPLETED" "Operation not allowed" "Already exists" "table does not exist");
+    typeset -a errorslist=(
+        "SUCCESSFULLY COMPLETED" #0
+         "Already exists" #1
+          "Operation not allowed" #2
+            "Incompatible Type" #3
+               "DB does not exist" #4
+                  "Wrong row" #5
+                  "PK would lose uniqueness" #6
+                  "No Central dir" #7
+                   "table does not exist" #8
+                   "No DB selected" #9
+            );
    # echo "IN" $1;
 if [ $1 -eq 0  ] 
 then
 echo ${errorslist[ $1 ]};
-return 0;
 return 0;
 else
 echo ${errorslist[ $1 ]};
@@ -84,7 +94,7 @@ then
 mkdir $workingstr/$1
 #$eh $?;
 else
-return 2;
+return 1;
 fi
 }
 function create-table(){
@@ -98,7 +108,7 @@ alltypes["string"]=1;
 tbod=`delcha "$tbod" " "`
 tbod=`delcha "$tbod" "{"`
 tbod=`delcha "$tbod" "}"`
-echo "NAME :" $tbod" BODY"$tname
+#echo "NAME :" $tbod" BODY"$tname
 coltypes=(`echo $tbod | awk -F, '{
     
     i=1;
@@ -136,7 +146,7 @@ echo $tbod | sed 's/,/\n/g' > $currworkdb/$tname.meta
 touch $currworkdb/$tname.log
 #$eh $?;
 else
-return 3;
+return 1;
 fi
 
 
@@ -151,8 +161,9 @@ typeset -l str="$*";
 
 instructionpart=`echo $str | cut -f1 -d" " `
 typeset -l body=`echo $str | cut -f2- -d" " `
-echo "instruction: "$instructionpart" body "$body
+#echo "instruction: "$instructionpart" body "$body
 ${arrlocalinstr[$instructionpart]}  $body;
+return $?;
 }
 
 
@@ -192,7 +203,10 @@ function update
 typeset -l str="$*"
 
 typeset tname=`echo $str | cut -f1 -d" " `;
-
+if [ ! -f  $currworkdb/$tname.table  ]
+then 
+return 8
+fi;
 typeset changeble=`echo $str | cut -f2 -d" " `;
 #echo $changeble;
 typeset condition=`echo $str | cut -f4- -d" " `;
@@ -258,7 +272,7 @@ done
 
 if [ $ticky -eq 0 ]
 then
-return 4;
+return 5;
 fi
 
 
@@ -327,7 +341,7 @@ tbf=`$tbd | wc -l `;
 #echo $tbf
 if [ $tbf -gt 1 -a $haspk -eq 1 ]
 then
-return 4;
+return 6;
 else
 #echo $cmd
 $cmd >$currworkdb/$tname.table.temp
@@ -354,7 +368,10 @@ typeset -l str="$*"
 
 
 typeset tname=`echo $str | cut -f2 -d" " `;
-
+if [ ! -f  $currworkdb/$tname.table  ]
+then 
+return 8
+fi;
 #echo $str
 typeset condition=`echo $str | cut -f4- -d" " `;
 
@@ -416,29 +433,6 @@ rm $currworkdb/$tname.table.temp
 }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ############################################################################################
 ######SELECT
 
@@ -451,7 +445,10 @@ function selectfn
 typeset -l str="$*";
 
 typeset tname=`echo $str | cut -f3 -d" " `;
-
+if [ ! -f  $currworkdb/$tname.table  ]
+then 
+return 8
+fi;
 typeset printable=`echo $str | cut -f1 -d" " `;
 
 typeset condition=`echo $str | cut -f5- -d" " `;
@@ -524,6 +521,12 @@ typesnamesa["number"]=1
 typesnamesa["string"]=2
 #names
 typeset tname=`echo $str | cut -f1 -d" " `;
+
+if [ ! -f  $currworkdb/$tname.table  ]
+then 
+return 8
+fi;
+
 typeset  names=(`awk -F: '{
     
    print $1;
@@ -559,7 +562,7 @@ do
 
 if [ ${body[0]} =  $pk   ]
 then
-return 4;
+return 6;
 fi
 
 done;
@@ -570,14 +573,14 @@ do
 typeset -l testresult=`isoftype $elems` 
 typeset -l tempo=${types["$cntr"]};
 #echo "HONGA !!" ${typesnamesa["number"] }" d" ${typesnamesa["$testresult"]}"dgg"$tempo"OTHER"$testresult;
-if [    ${typesnamesa["$testresult"]} -gt  ${typesnamesa["$tempo"] }  ]
+if [   ${typesnamesa["$testresult"]}   -gt ${typesnamesa["$tempo"] } ]
 then
-#echo $testresult"5arag"${types[$cntr]}"LOL"$cntr
-return 4;
+echo $testresult"5arag"${types[$cntr]}"LOL"$cntr
+return 3;
 fi
 (( cntr=cntr+1 ));
 done;
-
+#echo "3ada"
 if [ ${#body[*]} -ne  ${#types[*]}  ]
 then
 return 4;
@@ -612,15 +615,105 @@ function use {
 if [ -d  $workingstr/$1   ]
 then
     currworkdb=$workingstr/$1
+    workdbstr=$1;
 else
 return 5;
 fi
 
 
 }
+function view-tables
+{
+if [ ! -d $currworkdb -o $currworkdb = $workingstr ]
+then
+return 7
+
+fi
+ls  $currworkdb | grep .table | cut -d. -f1 
+
+}
+
+function view-dbs
+{
+if [ ! -d $workingstr ]
+then
+return 7
+fi
+ls  $workingstr 
+}
+function view {
+typeset -A arrlocalinstr
+arrlocalinstr["tables"]="view-tables"
+arrlocalinstr["databases"]="view-dbs"
+typeset -l str="$*";
+
+instructionpart=`echo $str | cut -f1 -d" " `
+#echo "instruction: "$instructionpart" body "$body
+${arrlocalinstr[$instructionpart]}  $body;
+
+return $?
+}
+
+function out {
+echo "BYEEEEE ;)"
+exit 0;
+}
+function helpcmd
+{
+    
+typeset -A arrhelp
+typeset -A ord2
+typeset str="$*";
+arrhelp["create"]="create command , Usage :
+
+create Database DBNAME
+Create table name {f1name:type,[f2name:type[...]]}
+"
+arrhelp["delete"]="delete command , Usage :
+
+
+delete table tablename
+delete from tablename where f1name='a' and f2name>=3 
+"
+arrhelp["insert"]="insert command , Usage:
+
+insert tablename {feild1,feild2,...}
+
+"
+arrhelp["select"]=="select command , Usage :
+
+
+select %|f1name,[....] from tablename where f1name='a' and f2name>=3 
+"
+arrhelp["update"]=="select command , Usage :
+
+
+update tname f1name=val,f3name=val where f1name='a' and f2name>=3  
+"
+arrhelp["use"]="use command , Usage :
+use dbname
+
+"
+arrhelp["view"]="view  command , Usage :
+
+view databases 
+view tables
+
+"
+arrhelp["bye"]="exit command , Usage :
+bye
+
+"
+arrhelp["help"]="help command , Usage :
+
+help cmd
+"
+ord2=`echo $str | cut -f1 -d" " `
+echo ${arrhelp[$ord2]};
+}
 #########################################################################################################
 #echo ${str:i:1}
-#"            create       Database    SATIMA"
+#"create  Database SATIMA"
 #"insert tname (a,b,c,d,s) "
 #"delete table x"
 #"delete from tablename where msd=a";
@@ -628,28 +721,36 @@ fi
 #select % from tname where x==3 and d<4
 #Example : select % from alpha where id\<121
 #update tname a=3,b=2 where a==f 
+#delete from tname where s==k
 typeset -A arrinstr
 typeset -l str
 typeset -lrx corestr="."
 typeset -lrx workingstr=$corestr"/dbmsroot"
 typeset -lx currworkdb=$workingstr"/amr"
+typeset -lx currworkdb=$workingstr"/amr"
+typeset -lx workdbstr="amr"
 typeset isusingdb=0
-ls $workingstr;
+#ls $workingstr;
 arrinstr["create"]="create"
 arrinstr["delete"]="delete"
 arrinstr["insert"]="insert"
 arrinstr["select"]="selectfn"
 arrinstr["update"]="update"
 arrinstr["use"]="use"
-
-
+arrinstr["view"]="view"
+arrinstr["bye"]="out"
+arrinstr["help"]="helpcmd"
 while ((1))
 do
+echo -n "[$workdbstr]>>"
 read str
 ord1=`echo $str | cut -f1 -d" " `
-echo "ORDER" $ord1;
+#echo "ORDER" $ord1;
 body=`echo $str | cut -f2- -d" " `
+#echo "IN";
 ${arrinstr[$ord1]} $body;
+#echo "BACK";
+ErrorHandler $?
 
 done
 
