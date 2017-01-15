@@ -150,10 +150,6 @@ echo "instruction: "$instructionpart" body "$body
 ${arrlocalinstr[$instructionpart]}  $body;
 }
 
-function delete(){
-echo sdfdsf
-
-}
 
 #types             kl=(["DGFD"]="GDFG" ["FDGDFG"]="DGFDGFD")
 function isoftype {
@@ -187,7 +183,7 @@ function update
 #update Tname
 #update tname a=3,b=2 where a==f 
 #"tname mg=7,kek='top' where a==f "
-str="$*"
+typeset -l str="$*"
 
 typeset tname=`echo $str | cut -f1 -d" " `;
 
@@ -344,7 +340,74 @@ fi
 
 
 
+function delete
+{
+typeset -l str="$*"
+#update Tname
+#delete tname where a==f 
 
+
+typeset tname=`echo $str | cut -f2 -d" " `;
+
+echo $str
+typeset condition=`echo $str | cut -f4- -d" " `;
+
+#2
+
+typeset  names=(`awk -F: '{
+    
+   print $1;
+    }
+' $currworkdb/$tname.meta `);
+typeset -A namesnew;
+typeset cntr=1;
+for j in ${names[*]}
+do
+
+namesnew[$j]=$cntr;
+((cntr=cntr+1));
+done
+
+if [ -z "$condition" ]
+then 
+condition=1;
+fi;
+
+condition=`echo $condition | sed -e 's/ and /\&\&/g' -e 's/ or /||/g'`;
+
+#echo "NAMES IS" ${names[*]};
+
+namestyp=`echo ${names[*]} | sed s/" "/,/g  `
+
+#echo "PRINTI" $printable
+for j in ${names[*]}
+do
+c=" s/$j/\$${namesnew[$j]}/g"
+#echo $c
+condition=`echo $condition | sed $c  `;
+
+done
+#echo "COND" $condition 
+#printable=`echo "$printable "| sed 's/,/"-------"/g'  `;
+condition=`echo $condition | sed "s/'/\"/g"  `
+condition=`delcha "$condition" " "`
+
+#echo "cond" $condition "print"$printable
+tbd=" awk  {if($condition){print\$0;};}   /home/Mgamal/git.work/BashDBMS/dbmsroot/amr/alpha.table";
+cmd=" awk {if(!($condition)){print\$0;};} /home/Mgamal/git.work/BashDBMS/dbmsroot/amr/alpha.table";
+#echo $cmd;
+
+
+
+$cmd >$currworkdb/$tname.table.temp
+cat /home/Mgamal/git.work/BashDBMS/dbmsroot/amr/alpha.table.temp > $currworkdb/$tname.table
+rm $currworkdb/$tname.table.temp
+#$tbd
+
+
+
+
+}
 
 
 
@@ -555,6 +618,22 @@ arrinstr["delete"]="delete"
 arrinstr["insert"]="insert"
 arrinstr["select"]="selectfn"
 arrinstr["update"]="update"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 #str="            ceate       table     {      id:  number,   kek:  string,mg:  number,  sss:string ,a:pk}"
 #"            create       Database    SATIMA"
 #"insert tname (a,b,c,d,s) "
